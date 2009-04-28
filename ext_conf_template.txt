@@ -1,0 +1,4 @@
+  # cat=basic; type=text; label=Couple page sysfolder: 17,10:4,10.
+sysfolder = 
+  # cat=basic; type=text; label=name of the ldap table extesion: default, using the macmade extesion ' tx_ldapmacmade_server'.
+ldap_table = tx_ldapmacmade_server
