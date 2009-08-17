@@ -28,11 +28,11 @@ $EM_CONF[$_EXTKEY] = array(
 	'modify_tables' => '',
 	'clearCacheOnLoad' => 0,
 	'lockType' => '',
-	'author_company' => '',
-	'version' => '0.0.2',
+	'author_company' => 'WCC',
+	'version' => '0.0.5',
 	'constraints' => array(
 		'depends' => array(
-			'sr_feuser_register' => '',
+			'sr_feuser_register' => '-2.5.22',
 		),
 		'conflicts' => array(
 		),

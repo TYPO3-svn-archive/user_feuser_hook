@@ -22,9 +22,7 @@
 *  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
-//require_once(t3lib_extMgm::extPath($extkey,'sv1/class.tx_ldapmacmade_sv1.php'));
-//require_once(t3lib_extMgm::extPath('ldap_macmade') . 'class.tx_ldapmacmade_div.php');
-require_once(t3lib_extMgm::extPath('ldap_macmade') . 'sv1/class.tx_ldapmacmade_sv1.php');
+//require_once(t3lib_extMgm::extPath('ldap_macmade') . 'sv1/class.tx_ldapmacmade_sv1.php');
 require_once( 'class.my_ldap.php');
 
 /**
@@ -36,50 +34,50 @@ require_once( 'class.my_ldap.php');
  */
 class user_feuserhook_pi1 {
 	
-	function appenews(&$OpenLDAP, $uid, $findData) {
-		global $TYPO3_DB;
-		
-		$res = $TYPO3_DB->exec_SELECTquery('*', 'sys_dmail_feuser_category_mm', 'uid_local='.$uid, '', ''); //collumns, table, where, ?, sorting
-		while ($row = $TYPO3_DB->sql_fetch_assoc($res)) {
-			$info['enews'].=$row[uid_foreign].',';
-		}
-		if ($findData['count']>0) $OpenLDAP->modify($findData[0]['dn'],$info);
-	}
-	
 	function main_hook(&$recordArray, &$pid) {
 		
 		//t3lib_div::debug('MainHook');
+		//t3lib_div::debug($recordArray);
 		
 		// get parameters of the extesion
 		
 		$sysconf=unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['user_feuser_hook']);
 		
 		$OpenLDAP = new myLDAP($sysconf['ldap_table'], $pid, $sysconf['sysfolder']);
-		//$OpenLDAP->setServer('172.18.1.91', '389', '3', 'cn=admin,dc=ecucenter,dc=org', 'helpdesk', 'dc=ecucenter,dc=org', '(objectClass=Person)');
-		$OpenLDAP->debug();
+		//$OpenLDAP->debug();
 		
 		$data='';
-		$data = $OpenLDAP->search('','email='.$recordArray['email']);
-		t3lib_div::debug($recordArray['email']);
-		
+		$data = $OpenLDAP->search('','mail='.$recordArray['email']);
+		//t3lib_div::debug($data);
 		
 		if ($data['count']==0) { // if the user does'nt exist
-			t3lib_div::debug('if');
-			$name = split(' ', $recordArray['name']);
-			$info['cn'] = $recordArray['name'];
-			$info['sn'] = $name[0];
-			$info['email'] = $recordArray['email'];
-			//$info['userPassword'] = $recordArray['password'];
 			
-			$info['objectclass'] = $recordArray['person'];
-			$dn='cn='.$info['cn'].',o=Public,dc=ecucenter,dc=org';
+			$name = split(' ', $recordArray['name']);
+			$info['givenName']=$recordArray['first_name'];
+			$info['sn'] = $recordArray['last_name'];
+			$info['mail'] = $recordArray['email'];
+			$info['userpassword'] = $recordArray['password'];
+			
+			$info['objectClass'] = 'inetOrgPerson';
+			$info['groupMembership'] = 'cn=presse,ou=groups,ou=public,o=ecucenter';
+			$info['securityEquals'] = 'cn=presse,ou=groups,ou=public,o=ecucenter';
+			$dn='cn='.$recordArray['email'].',ou=users,ou=Public,o=ecucenter';
 			$OpenLDAP->add($dn, $info);
+			//t3lib_div::debug($info);
+			
+			$info2['member'] = 'cn='.$recordArray['email'].',ou=users,ou=public,o=ecucenter';
+			$dn='cn=presse,ou=groups,ou=public,o=ecucenter';
+			$OpenLDAP->modify($dn, $info2);
+			//t3lib_div::debug($info2);
+			
 		} else {
-			t3lib_div::debug('else');
-			$this->appenews($OpenLDAP, $recordArray[uid], $data);
+			//t3lib_div::debug('else');
+			//$this->appenews($OpenLDAP, $recordArray[uid], $data);
 		}
 		
-		
+		// delete the password, because it was store only in ldap server
+		$res = $GLOBALS['TYPO3_DB']->sql(TYPO3_db, 'UPDATE fe_users SET password="" WHERE uid='.$recordArray['uid']);
+
 	}
 	
 	function registrationProcess_afterSaveEdit($recordArray, &$invokingObj) {

@@ -138,6 +138,7 @@ class myLDAP {
 		
 		$this->ldapServer=ldap_connect($this->adress);
 		if ($this->version>0) ldap_set_option($this->ldapServer, LDAP_OPT_PROTOCOL_VERSION, $this->version);
+		ldap_start_tls($ldapcon); 
 		if ($this->ldapServer) $this->connexion=@ldap_bind($this->ldapServer, $this->user, $this->password);
 		
 		if (strtolower(@ldap_error($this->ldapServer)) <> 'success') {
@@ -160,7 +161,7 @@ class myLDAP {
 		$this->filter=$filter;
 	}
 	
-	function setServerFromDB($tableName, $pid, $sysfolderInfo) {
+	function setServerFromDB($tableName, $pid, $sysfolderInfo, $user='', $password='') {
 		/*
 		 *  Définir les paramètre du serveur OpenLDAP en allant les chercher dans la table typo3 $tableName
 		 *  $pid, id de la page en cours
@@ -177,8 +178,16 @@ class myLDAP {
 				$this->adress=$ldap_server['address'];
 				$this->port=$ldap_server['port'];
 				$this->version=intval($ldap_server['version']);
-				$this->user=$ldap_server['user'];
-				$this->password=$ldap_server['password'];
+				if ($user=="") {
+					$this->user=$ldap_server['user'];
+				} else {
+					$this->user=$user;
+				}
+				if ($password=="") {
+					$this->password=$ldap_server['password'];
+				} else {
+					$this->password=$password;
+				}
 				$this->basedn=$ldap_server['basedn'];
 				$this->filter=$ldap_server['filter'];
 				break;
@@ -190,7 +199,7 @@ class myLDAP {
 		/*
 		 * Constructeur, Initialise les paramètres serveur et créer un connexion
 		 */
-		$this->setServerFromDB($tableName, $pid, $sysfolderInfo);
+		$this->setServerFromDB($tableName, $pid, $sysfolderInfo, 'cn=admintypo3,ou=services,o=ecucenter', 'n0v3ll123');
 		$this->bind();
 	}
 	
